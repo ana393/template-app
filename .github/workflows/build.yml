@@ -52,6 +52,13 @@ jobs:
 
       - name: Build project
         run: mvn clean install -U
+        
+      - name: Wait for Exchange indexing
+        if: github.event_name == 'push'
+        run: |
+          echo "Waiting 60 seconds for Exchange to index the published artifact..."
+          sleep 60
+          echo "Exchange indexing wait complete"
 
   # Deploy to Development (from development branch)
   deploy-to-development:
