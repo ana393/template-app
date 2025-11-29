@@ -50,8 +50,11 @@ jobs:
           git commit -m "[skip ci] Update version" || echo "No changes to commit"
           git push origin ${GITHUB_REF#refs/heads/}
 
-      - name: Build and publish to Exchange
-        run: mvn --settings .maven/settings.xml clean deploy -DskipTests
+      - name: Build 
+        run: mvn clean package -DskipTests
+
+      - name: Publish to Exchange
+        run: mvn --settings .maven/settings.xml deploy -DskipTests -DskipMunitTests
         
       - name: Wait for Exchange indexing
         if: github.event_name == 'push'
