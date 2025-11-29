@@ -1,0 +1,20 @@
+#%RAML 1.0 Library
+usage: This library defines the standard security schemes for APIs.
+securitySchemes:
+  clientIdEnforcement:
+    description: Each request must contain the header necessary for
+                 Anypoint's Client ID Enforcement authentication policy.
+    type: Basic Authentication
+    describedBy:
+      headers:
+        Authorization:
+          description: |
+            Used to send the Base64 encoded the client "id:secret"
+            credentials
+          type: string
+      responses:
+        401:
+          description: |
+            Unauthorized. Either the provided client id and secret
+            combination is invalid, or the client is not allowed to
+            access the content provided by the requested URL.

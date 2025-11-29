@@ -1,0 +1,16 @@
+#%RAML 1.0 Trait
+headers:
+  client_id:
+    description: |
+      A client_id is provided with access to an API and specifically approved environments.
+      API Access is requested by the client from within the Exchange. 
+      SLAs and client management is maintained via the API Manager.
+    type: string
+    example: d39bd98b8ef84ccd85311ecbc2f4e9fd
+  client_secret:
+    description: |
+      A client_secret provides an additional layer of security to the request.
+      The client_secret can be viewed by the consumer at https://anypoint.mulesoft.com/exchange/applications/
+    type: string
+    example: c1D440f39f624E7eBdF3eb512bB52A55
+  

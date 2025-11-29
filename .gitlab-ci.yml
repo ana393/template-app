@@ -1,0 +1,133 @@
+.common_rules_template:
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "development" || $CI_COMMIT_REF_NAME == "main"'
+      when: always 
+    - when: never  
+
+image: maven:3.8.4-openjdk-8
+
+# Configuración del caché para persistir el repositorio de Maven
+cache:
+  key: "$CI_COMMIT_REF_NAME"  # Usamos la rama como clave para el caché
+  paths:
+    - .m2/repository  # Caché del repositorio de Maven
+  policy: pull-push  # Descargar el caché antes de ejecutar y subirlo después
+
+stages:
+  - version
+  - build
+  - deploy
+  - stable_prodToNonprod
+
+# Set Version
+set_version:
+  stage: version
+  extends: .common_rules_template
+  script:
+    - echo "Setting version On branch= $CI_COMMIT_REF_NAME"
+    - git checkout $CI_COMMIT_REF_NAME || git checkout -b $CI_COMMIT_REF_NAME
+    - mvn build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
+    - mvn versions:commit
+    - echo "Export VERSION=$(mvn build-helper:parse-version -q -DforceStdout)" > version
+    
+    - git config --global user.name $CI_DEPLOY_USER
+    - git config --global user.email $CI_DEPLOY_EMAIL
+    - git add pom.xml version
+    - git commit -m "[skip ci] Update version"
+    # Push back the changes to GitLab (with authentication token)
+    - git remote set-url origin https://$CI_DEPLOY_USER:$CI_DEPLOY_PASSWORD@gitlab.com/learning1965106/$CI_PROJECT_NAME.git
+    - git push origin $CI_COMMIT_REF_NAME
+    #- git config --global --list
+  
+  artifacts:
+    paths:
+      - pom.xml
+
+#Build your Maven project
+build_project:
+  stage: build
+  extends: .common_rules_template
+  script:
+    - mvn clean install -U
+
+deploy_to_cloudhub:
+  stage: deploy
+  extends: .common_rules_template
+  script:
+    - echo "Writing settings.xml manually..."
+    - |
+      cat > settings.xml <<EOF
+      <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+        <servers>
+          <server>
+            <id>anypoint-exchange-v3</id>
+            <username>25b12a28b67f48b49b8031b1a6e97861</username>
+            <password>437b3aD0663f424BB130fB7feBd5a94c</password>
+          </server>
+        </servers>
+      </settings>
+      EOF
+    - cat settings.xml   # For debugging 
+    - echo "Start Deploying to Anypoint..."
+    - echo "Profile correctly set -P$CI_PROJECT_NAME-$MULE_NONPRODENV"
+    # - echo "$MULESOFT_SETTINGS" > settings.xml
+    # - echo "Verificando connectividad a Anypoint Maven Exchange ...."
+    # - curl -v --max-time 15 https://maven.anypoint.mulesoft.com || (echo "sin conectividad a Maven Exchange" && exit 1)
+    #  | grep -i -E "ERROR|error|Exception|Failed" 
+    - |
+      if [ "$CI_COMMIT_REF_NAME" == "development" ]; then
+        echo "Desplegando a NON-PROD"
+        mvn -s settings.xml deploy -DskipTests \
+          -DmuleDeploy \
+          -P$CI_PROJECT_NAME-$MULE_NONPRODENV \
+          -Denvironment=$MULE_NONPRODENV  \
+          -DenvSufix=$NonProdSufix \
+          -DbusinessGroupId=$MULESOFT_ANYPOINT_BUSINESS_GROUP_ID \
+          -DconnectedAppClientId=$MULE_CONNECTEDAPP_CLIENT_ID \
+          -DconnectedAppClientSecret=$MULE_CONNECTEDAPP_CLIENT_SECRET \
+          -DconnectedAppGrantType=$MULE_CONNECTEDAPP_GRANT_TYPE \
+          -DsecureKey=$NONPROD_SECUREKEY \
+          -DanypointClientId=$MULE_ANYPOINT_CLIENT_ID \
+          -DanypointClientSecret=MULE_ANYPOINT_CLIENT_SECRET
+      fi
+    - |
+      if [ "$CI_COMMIT_REF_NAME" == "main" ]; then
+        echo "Desplegando a Produccion..."
+        mvn -s settings.xml deploy -DskipTests \
+          -DmuleDeploy \
+          -Ptemplate-app-prod \
+          -Denvironment=Production \
+          -DenvSufix=prod \
+          -DbusinessGroupId=3193dd13-2852-4b1e-8aae-834de6aa2cce \
+          -DconnectedAppClientId=25b12a28b67f48b49b8031b1a6e97861 \
+          -DconnectedAppClientSecret=437b3aD0663f424BB130fB7feBd5a94c \
+          -DconnectedAppGrantType=client_credentials \
+          -DsecureKey=ADIF@INTEG@NPROD \
+          -DanypointClientId=0b57a4c9b8fd4366bdfa332c926fb494 \
+          -DanypointClientSecret=22a7f58152174964957E4d244E357AA5
+      fi
+    - echo "Despliegue completado"
+
+StableTag_ToNonProd:
+  stage: stable_prodToNonprod
+  script:
+    - echo "Creating pull request from $CI_COMMIT_REF_NAME to development"
+    - |
+      curl -X POST \
+      -H "PRIVATE-TOKEN: $CI_DEPLOY_PASSWORD" \
+          -H "Content-Type: application/json" \
+          -d '{
+                "title": "Auto MR: main → development",
+                "source_branch": "main",
+                "target_branch": "development",
+                "description": "This merge request was automatically generated after production deployment."
+              }' \
+        https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/merge_requests
+
+  only:
+    - main
+  when: on_success
+
+

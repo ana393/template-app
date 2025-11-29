@@ -1,0 +1,30 @@
+#%RAML 1.0 Library
+usage: This library defines the Health Check API.
+
+types:
+  health-check-response:
+    type: object
+    properties:
+      timestamp:
+        type: string
+        required: true
+        example: "2018-06-11T16:46:43Z"
+      status:
+        type: string
+        required: false
+        enum: ["Running", "Down", "Partial"]
+        example: "Running"
+      details:
+        type: object
+        required: false
+        example: {}
+
+resourceTypes: 
+  check:
+    get:
+      description: "Get the system's health"
+      responses:
+        200:
+          body:
+            application/json: 
+              type: health-check-response

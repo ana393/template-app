@@ -1,0 +1,36 @@
+api:
+  id: "17678837" # replaced with real id once added to api manager
+env: "desarollo"
+http:
+  host: "localhost"
+  basePath: "/v1/*"
+  private:
+    port: "8081"
+  timeouts:
+    connection: "30000"
+    response: "30000"
+
+reconnection:
+  frequency: "500"
+  attempts: "3"
+  
+serverSsl:
+  keystorePassword: "![]"
+  privateKeyPassword: "![]"
+  fileName: "" #.pfx
+#app Idoc configuration
+sap:
+  connection:
+    systemNumber: ""
+    clientID: ""
+    messageServerHost: ""
+    systemId: ""
+    messageServerPort: ""
+    messageServerGroup: "All"
+    gatewayHost: ""
+    gateServicePort: ""
+    programId: ""
+
+sendIdoc:
+  maxRetries: "2"
+  milliSecsBetweenRetries: "4000"

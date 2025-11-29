@@ -1,0 +1,105 @@
+#%RAML 1.0 Library
+usage: Common API error response structure used across all organization APIs.
+
+types:
+  Error:
+    type: object
+    displayName: Platform Fault Datatype
+    properties:
+      exceptionCode: integer
+      exceptionMessage: string
+      transactionId: string
+
+traits:
+  err_400:     
+    responses:
+      400:
+        description: Bad Request. The request was malformed or invalid.
+        body:
+          application/json:
+            type: Error 
+            example:
+                {
+                  "exceptionCode": 400,
+                  "exceptionMessage": "APIKIT:BAD_REQUEST:Required parameter not specified",
+                  "transactionId": "b6d54de0-3663-11f0-9d8b-00059a3c7a00"
+               }
+  err_401:    
+    responses:             
+      401:
+        description: Unauthorized. Authentication is required.
+        body:
+          application/json:
+            type: Error 
+            example:
+                {
+                  "exceptionCode": 401,
+                  "exceptionMessage": "Unauthorized. Missing or invalid authentication credentials",
+                  "transactionId": "b6d54de0-3663-11f0-9d8b-00059a3c7a00"
+                }
+  err_403:   
+    responses:
+      403:
+        description: Forbidden. The client does not have access to this resource.
+        body:
+          application/json:
+            type: Error 
+            example:
+                {
+                  "exceptionCode": 403,
+                  "exceptionMessage": "Forbidden. You do not have the necessary permissions",
+                  "transactionId": "b6d54de0-3663-11f0-9d8b-00059a3c7a00"
+                }
+  err_404:   
+    responses:
+      404:
+        description: Not Found. The requested resource could not be found.
+        body:
+          application/json:
+            type: Error 
+            example:
+                {
+                  "exceptionCode": 404,
+                  "exceptionMessage": "Not Found. The requested resource does not exist",
+                  "transactionId": "b6d54de0-3663-11f0-9d8b-00059a3c7a00"
+                }
+  err_405:   
+    responses:
+      405:
+        description: Method Not Allowed.
+        body:
+          application/json:
+            type: Error 
+            example:
+                {
+                  "exceptionCode": 405,
+                  "exceptionMessage": "Method Not Allowed.",
+                  "transactionId": "b6d54de0-3663-11f0-9d8b-00059a3c7a00"
+                }
+  err_415:    
+    responses:
+      415:
+        description: Unsupported Media Type.
+        body:
+          application/json:
+            type: Error 
+            example:
+                {
+                  "exceptionCode": 415,
+                  "exceptionMessage": "Unsupported Media Type",
+                  "transactionId": "b6d54de0-3663-11f0-9d8b-00059a3c7a00"
+                }
+  err_500:   
+    responses:
+      500:
+        description: Internal Server Error. A generic error occurred on the server.
+        body:
+          application/json:
+            type: Error
+            
+            example:
+                {
+                  "exceptionCode": 500,
+                  "exceptionMessage": "Internal Server Error. Please try again later.",
+                  "transactionId": "b6d54de0-3663-11f0-9d8b-00059a3c7a00"
+                }

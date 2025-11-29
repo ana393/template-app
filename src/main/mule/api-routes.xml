@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:sap="http://www.mulesoft.org/schema/mule/sap" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/sap http://www.mulesoft.org/schema/mule/sap/current/mule-sap.xsd">
+    <apikit:config name="api-config" api="api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="api-main">
+        <http:listener config-ref="HTTP_Listener_config" path="${http.basePath}">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {} ++ {'x-correlation-id': vars.correlationId}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <ee:transform doc:name="variables" doc:id="4f61c5d7-2217-46a2-a64f-bf1892545687">
+            <ee:message />
+            <ee:variables>
+                <ee:set-variable variableName="logPrefix"><![CDATA[%dw 2.0
+output application/java
+---
+"CorrelationId : $(correlationId) : API Name "]]></ee:set-variable>
+                <ee:set-variable variableName="correlationId"><![CDATA[%dw 2.0
+output application/java
+---
+correlationId]]></ee:set-variable>
+                <ee:set-variable variableName="start"><![CDATA[%dw 2.0
+output application/java
+---
+now()]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <apikit:router config-ref="api-config" />
+        <error-handler ref="Global_Error_Handler" />
+    </flow>
+    <flow name="get:\:api-config">
+        <logger level="INFO" doc:name="start" doc:id="8f7a71da-df55-4ce1-9130-d7852f7e7ec1" message="#[vars.logPrefix] : Call Started at timestamp :  #[vars.start]" />
+        <ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+//import * from java!org.mycompany.utils.MyHelper
+import java!org::mycompany::utils::MyHelper
+output application/json encoding="UTF-8"
+---
+{
+	timestamp: now(),
+	environment: p('env'),
+	status: "Running",
+	ip: server.ip,
+	host: server.host,
+	consumer: MyHelper::greet("Jhon Doe")
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <ee:transform doc:name="Transform Message" doc:id="3555c454-8132-4fd3-a350-644aa1362943">
+            <ee:message />
+            <ee:variables>
+                <ee:set-variable variableName="duration"><![CDATA[%dw 2.0
+output application/java
+var time_diff = now() - vars.start
+var hour= time_diff.hours default 0
+var minute= time_diff.minutes default 0
+var second= time_diff.seconds-time_diff.minutes*60-time_diff.hours*60*60 default 0
+var milisecond= time_diff as Number {unit: "milliseconds"} - 1000*time_diff.seconds default 0
+---
+"$(hour) hours, $(minute) minutes, $(second) seconds, and $(milisecond) miliseconds"]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" doc:name="end" doc:id="089062b6-9f8e-4d0a-8af0-3a61cf8c7682" message="#[vars.logPrefix] : Duration of the API call  :  #[vars.duration]" />
+    </flow>
+</mule>

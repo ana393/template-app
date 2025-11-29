@@ -1,0 +1,23 @@
+#%RAML 1.0 DataType
+type: object
+properties:
+  success: boolean
+  httpStatusCode: integer
+  application:
+    type: string
+  transactionId:
+    type: !include uuid.raml
+  transactionType: 
+    type: string
+  exceptionDetails:
+    type: object
+    properties: 
+      exceptionCode?:
+        type: string
+      exceptionTimestamp:
+        type: datetime
+        example: 2018-02-02T16:45:09.000Z
+      exceptionMessage:
+        type:  string
+      description?:
+        type: string

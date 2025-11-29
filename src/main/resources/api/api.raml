@@ -1,0 +1,20 @@
+#%RAML 1.0
+title: API Title. Ex. Salesforce System API
+version: v1
+baseUri: https://domain.com/{businessName}/v1
+protocols: [ HTTPS ]
+mediaType: application/json
+
+uses:
+  Health: common-module/health-check.raml
+  StandardErrors: common-module/faultmessages-library.raml
+  SecuritySchema: common-module/standard-security-library.raml
+
+traits:
+  ClientIdEnforcement: !include common-module/id-secret-trait.raml
+  paginated: !include  common-module/pagination.raml
+
+
+/:
+  is: [ClientIdEnforcement,StandardErrors.err_400,StandardErrors.err_401,StandardErrors.err_403,StandardErrors.err_404,StandardErrors.err_405,StandardErrors.err_415,StandardErrors.err_500]
+  type: Health.check

@@ -1,0 +1,124 @@
+#%RAML 1.0 ResourceType  
+get?:
+   displayName: Get a list of <<resourcePathName>>
+   description: |
+    Retrieve a list of <<resourcePathName>>
+   responses:
+     200:
+      body:
+        application/json:
+          type: <<getDataType>>
+          examples: <<exampleGETResponse>>
+     400:
+      description: |
+        Bad request.
+      body:
+        application/json:
+          type: !include ../dataTypes/error.raml
+          examples: !include ../examples/errorObject/error400.raml 
+     401:
+      description: |
+        Unauthorized request. Please insert a valid client-id/client-secret
+      body:
+        application/json:
+          type: !include ../dataTypes/error.raml
+          examples: !include ../examples/errorObject/error401.raml
+     500:
+      description: |
+        No data found for the given request.
+      body:
+        application/json:
+          type: !include ../dataTypes/error.raml
+          examples: !include ../examples/errorObject/error500.raml
+     502:
+      description: |
+        No data found for the given request.
+      body:
+        application/json:
+          type: !include ../dataTypes/error.raml
+          examples: !include ../examples/errorObject/error502.raml
+
+patch?:
+   displayName: update part of a collection of <<resourcePathName>>
+   description: |
+    update a collection of <<resourcePathName>>
+   body:
+    application/json:
+      type: <<patchReqDataType>>
+      examples: <<examplePATCHRequest>>
+   responses:
+     202:
+      body:
+        application/json:
+          type: <<patchDataType>>
+          examples: <<examplePATCHResponse>>
+     400:
+      description: |
+        Bad request.
+      body:
+        application/json:
+          type: !include ../dataTypes/error.raml
+          examples: !include ../examples/errorObject/error400.raml 
+     401:
+      description: |
+        Anauthorized request. Please insert a valid client-id/client-secret
+      body:
+        application/json:
+          type: !include ../dataTypes/error.raml
+          examples: !include ../examples/errorObject/error401.raml
+     500:
+      description: |
+        No data found for the given request.
+      body:
+        application/json:
+          type: !include ../dataTypes/error.raml
+          examples: !include ../examples/errorObject/error500.raml
+     502:
+      description: |
+        No data found for the given request.
+      body:
+        application/json:
+          type: !include ../dataTypes/error.raml
+          examples: !include ../examples/errorObject/error502.raml
+post?:
+   displayName: create part of a collection of <<resourcePathName>>
+   description: |
+    create a collection of <<resourcePathName>>
+   body:
+    application/json:
+      type: <<postReqDataType>>
+      examples: <<examplePOSTRequest>>
+   responses:
+     202:
+      body:
+        application/json:
+          type: <<postDataType>>
+          examples: <<examplePOSTResponse>>
+     400:
+      description: |
+        Bad request.
+      body:
+        application/json:
+          type: !include ../dataTypes/error.raml
+          examples: !include ../examples/errorObject/error400.raml 
+     401:
+      description: |
+        Anauthorized request. Please insert a valid client-id/client-secret
+      body:
+        application/json:
+          type: !include ../dataTypes/error.raml
+          examples: !include ../examples/errorObject/error401.raml
+     500:
+      description: |
+        No data found for the given request.
+      body:
+        application/json:
+          type: !include ../dataTypes/error.raml
+          examples: !include ../examples/errorObject/error500.raml
+     502:
+      description: |
+        No data found for the given request.
+      body:
+        application/json:
+          type: !include ../dataTypes/error.raml
+          examples: !include ../examples/errorObject/error502.raml
