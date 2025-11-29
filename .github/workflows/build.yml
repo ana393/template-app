@@ -80,5 +80,4 @@ jobs:
           -DenvSufix="${{ secrets.ENV_SUFFIX }}" \
           -DsecureKey="${{ secrets.SECURE_KEY }}"
           echo "Deployment to Development completed"
-      
- 
+    
