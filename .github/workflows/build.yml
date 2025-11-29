@@ -2,9 +2,11 @@ name: Publish to Exchange & Deploy to CH2.0
 
 on:
   push:
-    branches: [ cloudhub2 ]
-    
-jobs:         
+    branches: [ main, development, cloudhub2 ]
+  pull_request:
+    branches: [ main, development ]
+
+jobs:
   build:
     runs-on: ubuntu-latest
     steps:
@@ -18,21 +20,28 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-maven-
 
-      - name: Set up JDK 1.8
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: "zulu"
-          java-version: 8
-      
+          java-version: 17
+
+      - name: Build and Test
+        run: |
+          mvn clean verify --settings .maven/settings.xml -DskipMunitTests
+
       - name: Publish to Exchange
+        if: github.event_name == 'push'
         run: |
           mvn deploy --settings .maven/settings.xml -DskipMunitTests \
           -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
           -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}"
 
       - name: Deploy to CloudHub 2.0
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/cloudhub2')
         run: |
           mvn deploy --settings .maven/settings.xml -DskipMunitTests -DmuleDeploy \
           -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
           -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}" \
-          -Ddecryption.key="${{ secrets.DECRYPTION_KEY }}"
+          -DenvSufix="${{ secrets.ENV_SUFFIX }}" \
+          -DsecureKey="${{ secrets.SECURE_KEY }}"
