@@ -8,11 +8,12 @@ on:
     
 env:
   MAVEN_OPTS: -Xmx1024m
+
 jobs:
-  # Version bump stage (only on push to development, uat, or main)
-  set-version:
-    name: Set Version
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/development' || github.ref == 'refs/heads/uat' || github.ref == 'refs/heads/main')
+  # Build and version bump (runs on all pushes and PRs)
+  build:
+    name: Build and Version
+    if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/uat' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -27,50 +28,6 @@ jobs:
           distribution: "zulu"
           java-version: 17
 
-      - name: Bump version
-        run: |
-          echo "Setting version on branch= ${GITHUB_REF#refs/heads/}"
-          mvn build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
-          mvn versions:commit
-          echo "VERSION=$(mvn build-helper:parse-version -q -DforceStdout)" > version
-
-      - name: Commit version update
-        run: |
-          git config --global user.name "${{ secrets.GIT_USER_NAME }}"
-          git config --global user.email "${{ secrets.GIT_USER_EMAIL }}"
-          git add pom.xml version
-          git commit -m "[skip ci] Update version" || echo "No changes to commit"
-          git push origin ${GITHUB_REF#refs/heads/}
-
-      - name: Upload pom.xml artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: pom-xml
-          path: pom.xml
-          retention-days: 1
-
-  # Build stage (runs on all pushes and PRs)
-  build-project:
-    name: Build Project
-    needs: [set-version]
-    if: |
-      always() &&
-      (needs.set-version.result == 'success' || needs.set-version.result == 'skipped') &&
-      (github.ref == 'refs/heads/development' || github.ref == 'refs/heads/uat' || github.ref == 'refs/heads/main')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-
-      - name: Download pom.xml artifact
-        if: github.event_name == 'push'
-        uses: actions/download-artifact@v4
-        with:
-          name: pom-xml
-        continue-on-error: true
-
       - name: Cache Maven dependencies
         uses: actions/cache@v4
         with:
@@ -80,26 +37,26 @@ jobs:
             ${{ runner.os }}-maven-${{ github.ref_name }}-
             ${{ runner.os }}-maven-
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: "zulu"
-          java-version: 17
+      - name: Bump version and commit
+        if: github.event_name == 'push'
+        run: |
+          echo "Setting version on branch= ${GITHUB_REF#refs/heads/}"
+          mvn build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
+          mvn versions:commit
+          echo "VERSION=$(mvn build-helper:parse-version -q -DforceStdout)" > version
+          git config --global user.name "${{ secrets.GIT_USER_NAME }}"
+          git config --global user.email "${{ secrets.GIT_USER_EMAIL }}"
+          git add pom.xml version
+          git commit -m "[skip ci] Update version" || echo "No changes to commit"
+          git push origin ${GITHUB_REF#refs/heads/}
 
       - name: Build project
         run: mvn clean install -U
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: mule-application
-          path: target/*.jar
-          retention-days: 1
-          
   # Deploy to Development (from development branch)
   deploy-to-development:
     name: Deploy to Development
-    needs: [build-project]
+    needs: [build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/development'
     runs-on: ubuntu-latest
     environment:
