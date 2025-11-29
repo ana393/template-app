@@ -71,8 +71,8 @@
 						<connectedAppGrantType>${connectedAppGrantType}</connectedAppGrantType> -->
 						<applicationName>${project.artifactId}</applicationName>
 					<!--<releaseChannel>Edge</releaseChannel> -->
-					<!--<replicas>${replicas}</replicas>   -->
-					<!--<vCores>${cores}</vCores>   -->
+						<replicas>1</replicas>
+						<vCores>0.1</vCores>
 						<deploymentTimeout>2000000</deploymentTimeout>
 					<!--<integrations>
 							<services>
