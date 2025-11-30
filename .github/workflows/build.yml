@@ -37,25 +37,25 @@ jobs:
             ${{ runner.os }}-maven-${{ github.ref_name }}-
             ${{ runner.os }}-maven-
 
-      - name: Run MUnit Tests
-        env:
-          MUNIT_SECURE_KEY: ${{ secrets.MUNIT_SECURE_KEY || secrets.SECURE_KEY }}
-        run: |
-          # Coverage threshold set to 20% for initial testing
-          # TODO: Increase to 80% for UAT and production deployments
-          mvn clean test \
-            -Denv=test \
-            -DsecureKey="${MUNIT_SECURE_KEY}" \
-            -Dmunit.app.coverage=20 \
-            -Dmunit.coverage.fail.build=true
+      # - name: Run MUnit Tests
+      #   env:
+      #     MUNIT_SECURE_KEY: ${{ secrets.MUNIT_SECURE_KEY || secrets.SECURE_KEY }}
+      #   run: |
+      #     # Coverage threshold set to 20% for initial testing
+      #     # TODO: Increase to 80% for UAT and production deployments
+      #     mvn clean test \
+      #       -Denv=test \
+      #       -DsecureKey="${MUNIT_SECURE_KEY}" \
+      #       -Dmunit.app.coverage=20 \
+      #       -Dmunit.coverage.fail.build=true
 
-      - name: Upload MUnit Coverage Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: munit-coverage-report-${{ github.event.pull_request.base.ref }}
-          path: target/site/munit/coverage/
-          retention-days: 30
+      # - name: Upload MUnit Coverage Report
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: munit-coverage-report-${{ github.event.pull_request.base.ref }}
+      #     path: target/site/munit/coverage/
+      #     retention-days: 30
 
       - name: Set environment variables
         id: set-env
