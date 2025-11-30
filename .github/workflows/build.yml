@@ -81,8 +81,8 @@ jobs:
       - name: Build and Publish to Exchange
         run: |
           echo "Publishing to Exchange with debug output"
-          echo "Client ID: ${{ secrets.CONNECTED_APP_CLIENT_ID }}"
-          echo "Client Secret: ${#${{ secrets.CONNECTED_APP_CLIENT_SECRET }}}"
+          echo "Client ID is set: ${{ secrets.CONNECTED_APP_CLIENT_ID != '' }}"
+          echo "Client Secret is set: ${{ secrets.CONNECTED_APP_CLIENT_SECRET != '' }}"
           echo "Settings file: .maven/settings.xml"
           mvn -s .maven/settings.xml clean deploy -DskipTests -X \
             -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
