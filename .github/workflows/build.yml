@@ -80,8 +80,8 @@ jobs:
 
       - name: Build and Publish to Exchange
         run: |
-          echo "Publishing to Exchange with profile: ${{ steps.set-env.outputs.exchange_profile }}"
-          mvn -s .maven/settings.xml clean deploy -DskipTests -P "${{ steps.set-env.outputs.exchange_profile }}"
+          echo "Publishing to Exchange (without profile for POC/Free Trial)"
+          mvn -s .maven/settings.xml clean deploy -DskipTests
 
       - name: Deploy to CloudHub 2.0
         run: |
