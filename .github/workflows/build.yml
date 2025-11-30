@@ -80,8 +80,8 @@ jobs:
 
       - name: Build and Publish to Exchange
         run: |
-          echo "Publishing to Exchange (without profile for POC/Free Trial)"
-          mvn -s .maven/settings.xml clean deploy -DskipTests
+          echo "Publishing to Exchange with debug output"
+          mvn -s .maven/settings.xml clean deploy -DskipTests -X
 
       - name: Deploy to CloudHub 2.0
         run: |
