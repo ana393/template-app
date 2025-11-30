@@ -78,10 +78,10 @@ jobs:
             echo "exchange_profile=$REPO_NAME-v1-prod" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build and Publish to Exchange
+      - name: Build Application
         run: |
-          echo "Publishing to Exchange (without profile for POC/Free Trial)"
-          mvn -s .maven/settings.xml clean deploy -DskipTests
+          echo "Building application (skipping Exchange for POC/Free Trial)"
+          mvn clean package -DskipTests
 
       - name: Deploy to CloudHub 2.0
         run: |
