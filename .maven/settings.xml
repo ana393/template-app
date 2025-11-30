@@ -10,6 +10,11 @@
       <username>~~~Client~~~</username>
       <password>${client.id}~?~${client.secret}</password> <!-- these come from the build.yml and your github secrets -->
     </server>
+    <server>
+      <id>anypoint-exchange-v3</id> <!-- Exchange repository authentication -->
+      <username>~~~Client~~~</username>
+      <password>${client.id}~?~${client.secret}</password>
+    </server>
   </servers>
 
 </settings>
