@@ -95,6 +95,7 @@ jobs:
             -P${{ steps.set-env.outputs.maven_profile }} \
             -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
             -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}" \
+            -Denvironment="Sandbox" \
             -DenvSufix="${{ steps.set-env.outputs.env_suffix }}" \
             -DsecureKey="${{ secrets.SECURE_KEY }}"
           echo "Deployment completed successfully"
