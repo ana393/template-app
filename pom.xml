@@ -19,12 +19,13 @@
 		<http.connector.version>1.10.3</http.connector.version>
 		<sockets.connector.version>1.2.5</sockets.connector.version>
 		<secure.properties.module.version>1.2.7</secure.properties.module.version>
+		<munit.version>3.6.1</munit.version>
 	</properties>
 
 	<!-- CI/CD profiles for deployment automation -->
 	<profiles>
 		<profile>
-			<id>template-app-Sandbox</id>
+			<id>Sandbox</id>
 			<properties>
 				<targetName>non-prod</targetName>
 				<app.name>${project.name}-${envSufix}</app.name>
@@ -34,7 +35,7 @@
 			</properties>
 		</profile>
 		<profile>
-			<id>template-app-prod</id>
+			<id>prod</id>
 			<properties>
 				<targetName>pro-private-space</targetName>
 				<replicas>2</replicas>
@@ -61,20 +62,20 @@
 					<cloudhub2Deployment>
 						<uri>https://anypoint.mulesoft.com</uri>
 						<provider>MC</provider>
-						<environment>Sandbox</environment>
-						<target>Cloudhub-US-East-2</target>
+						<environment>{environment}</environment>
+						<target>${targetName}</target>
 						<javaVersion>17</javaVersion>
-					<!--<businessGroupId>${businessGroupId}</businessGroupId>  -->
+						<!--<businessGroupId>${businessGroupId}</businessGroupId>  -->
 						<server>Repository</server>
-				 <!--   <connectedAppClientId>${connectedAppClientId}</connectedAppClientId>
+						<!--   <connectedAppClientId>${connectedAppClientId}</connectedAppClientId>
 						<connectedAppClientSecret>${connectedAppClientSecret}</connectedAppClientSecret>
 						<connectedAppGrantType>${connectedAppGrantType}</connectedAppGrantType> -->
 						<applicationName>${project.artifactId}</applicationName>
-					<!--<releaseChannel>Edge</releaseChannel> -->
-						<replicas>1</replicas>
-						<vCores>0.1</vCores>
+						<!--<releaseChannel>Edge</releaseChannel> -->
+						<replicas>${replicas}</replicas>
+						<vCores>${cores}</vCores>
 						<deploymentTimeout>2000000</deploymentTimeout>
-					<!--<integrations>
+						<!--<integrations>
 							<services>
 								<objectStoreV2>
 									<enabled>true</enabled>
@@ -91,17 +92,17 @@
 						</deploymentSettings>  -->
 						<properties>
 							<envSufix>${envSufix}</envSufix>
-						<!--<anypoint.platform.client_id>${anypointClientId}</anypoint.platform.client_id>
+							<!--<anypoint.platform.client_id>${anypointClientId}</anypoint.platform.client_id>
 							<anypoint.platform.analytics_base_uri>${anypointAnalyticsBaseUri}</anypoint.platform.analytics_base_uri>
 							<anypoint.platform.base_uri>${anypointBaseUri}</anypoint.platform.base_uri>
 							<auditMessage>${auditMessage}</auditMessage> -->
 						</properties>
 						<secureProperties>
 							<secure_key>${secureKey}</secure_key>
-						<!--<anypoint.platform.client_secret>${anypointClientSecret}</anypoint.platform.client_secret>   -->
+							<!--<anypoint.platform.client_secret>${anypointClientSecret}</anypoint.platform.client_secret>   -->
 						</secureProperties>
 					</cloudhub2Deployment>
-			<!--<sharedLibraries>
+					<!--<sharedLibraries>
 					<sharedLibrary>
 						<groupId>com.sap.conn.jco</groupId>
 						<artifactId>com.sap.conn.jco.sapjco3</artifactId>
@@ -115,6 +116,37 @@
 						<artifactId>libsapjco3</artifactId>
 					</sharedLibrary> 
 				</sharedLibraries>  -->
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.mulesoft.munit.tools</groupId>
+				<artifactId>munit-maven-plugin</artifactId>
+				<version>${munit.version}</version>
+				<executions>
+					<execution>
+						<id>test</id>
+						<phase>test</phase>
+						<goals>
+							<goal>test</goal>
+							<goal>coverage-report</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<coverage>
+						<runCoverage>true</runCoverage>
+						<failBuild>${munit.coverage.fail.build}</failBuild>
+						<requiredApplicationCoverage>${munit.app.coverage}</requiredApplicationCoverage>
+						<formats>
+							<format>html</format>
+						</formats>
+					</coverage>
+					<argLines>
+						<argLine>-Denv=test</argLine>
+						<argLine>-DsecureKey=test-secure-key-12345</argLine>
+						<argLine>-Danypoint.platform.gatekeeper=disabled</argLine>
+						<argLine>-Dproject.version=1.0.0</argLine>
+					</argLines>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -170,6 +202,26 @@
 			<version>3.0.18</version>
 			<type>so</type> 
 		</dependency> -->
+		<dependency>
+			<groupId>com.mulesoft.munit</groupId>
+			<artifactId>munit-runner</artifactId>
+			<version>3.6.1</version>
+			<classifier>mule-plugin</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.munit</groupId>
+			<artifactId>munit-tools</artifactId>
+			<version>3.6.1</version>
+			<classifier>mule-plugin</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.weave</groupId>
+			<artifactId>assertions</artifactId>
+			<version>1.2.1</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<repositories>
@@ -191,7 +243,7 @@
 			<url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${project.groupId}/maven</url>
 			<layout>default</layout>
 		</repository>
-	<!-- <repository>
+		<!-- <repository>
 			<id>central</id>
 			<url>https://repo.maven.apache.org/maven2</url>
 			<layout>default</layout>

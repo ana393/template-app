@@ -1,32 +1,32 @@
 name: Publish to Exchange & Deploy to CH2.0
 
 on:
-  push:
+  pull_request_target:
     branches: [ development, uat, main ]
-  pull_request:
-    branches: [ development, uat, main ]
-    
+    types: [ closed ]
+
 env:
   MAVEN_OPTS: -Xmx1024m
+  JAVA_VERSION: 17
+  JAVA_DISTRIBUTION: zulu
 
 jobs:
-  # Build and version bump (runs on all pushes and PRs)
-  build:
-    name: Build and Version
-    if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/uat' || github.ref == 'refs/heads/main'
+  # Deploy job (runs only when PR is merged)
+  deploy:
+    name: Deploy to ${{ github.event.pull_request.base.ref }}
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.pull_request.base.ref == 'main' && 'production' || github.event.pull_request.base.ref }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GH_PAT }}
 
-      - name: Set up JDK 17
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
-          distribution: "zulu"
-          java-version: 17
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
 
       - name: Cache Maven dependencies
         uses: actions/cache@v4
@@ -37,57 +37,59 @@ jobs:
             ${{ runner.os }}-maven-${{ github.ref_name }}-
             ${{ runner.os }}-maven-
 
-      - name: Bump version and commit
-        if: github.event_name == 'push'
+      - name: Run MUnit Tests
+        env:
+          MUNIT_SECURE_KEY: ${{ secrets.MUNIT_SECURE_KEY || secrets.SECURE_KEY }}
         run: |
-          echo "Setting version on branch= ${GITHUB_REF#refs/heads/}"
-          mvn build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
-          mvn versions:commit
-          echo "VERSION=$(mvn build-helper:parse-version -q -DforceStdout)" > version
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add pom.xml version
-          git commit -m "[skip ci] Update version" || echo "No changes to commit"
-          git push origin ${GITHUB_REF#refs/heads/}
+          # Coverage threshold set to 20% for initial testing
+          # TODO: Increase to 80% for UAT and production deployments
+          mvn clean test \
+            -Denv=test \
+            -DsecureKey="${MUNIT_SECURE_KEY}" \
+            -Dmunit.app.coverage=20 \
+            -Dmunit.coverage.fail.build=true
 
-      - name: Build 
-        run: mvn clean package -DskipTests
-
-      - name: Publish to Exchange
-        run: mvn --settings .maven/settings.xml deploy -DskipTests -DskipMunitTests
-        
-      - name: Wait for Exchange indexing
-        if: github.event_name == 'push'
-        run: |
-          echo "Waiting 60 seconds for Exchange to index the published artifact..."
-          sleep 60
-          echo "Exchange indexing wait complete"
-
-  # Deploy to Development (from development branch)
-  deploy-to-development:
-    name: Deploy to Development
-    needs: [build]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
-    runs-on: ubuntu-latest
-    environment:
-      name: development
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - name: Upload MUnit Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          distribution: "zulu"
-          java-version: 17
+          name: munit-coverage-report-${{ github.event.pull_request.base.ref }}
+          path: target/site/munit/coverage/
+          retention-days: 30
 
-      - name: Deploy to CloudHub 2.0 (Development)
+      - name: Set environment variables
+        id: set-env
         run: |
-          echo "Deploying to Development..."
+          BRANCH="${{ github.event.pull_request.base.ref }}"
+          REPO_NAME="${{ github.event.repository.name }}"
+
+          # Set environment-specific variables
+          if [[ "$BRANCH" == "development" ]]; then
+            echo "env_suffix=dev" >> $GITHUB_OUTPUT
+            echo "maven_profile=Sandbox" >> $GITHUB_OUTPUT
+            echo "exchange_profile=$REPO_NAME-v1-dev" >> $GITHUB_OUTPUT
+          elif [[ "$BRANCH" == "uat" ]]; then
+            echo "env_suffix=uat" >> $GITHUB_OUTPUT
+            echo "maven_profile=Sandbox" >> $GITHUB_OUTPUT
+            echo "exchange_profile=$REPO_NAME-v1-uat" >> $GITHUB_OUTPUT
+          elif [[ "$BRANCH" == "main" ]]; then
+            echo "env_suffix=prod" >> $GITHUB_OUTPUT
+            echo "maven_profile=prod" >> $GITHUB_OUTPUT
+            echo "exchange_profile=$REPO_NAME-v1-prod" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and Publish to Exchange
+        run: |
+          echo "Publishing to Exchange with profile: ${{ steps.set-env.outputs.exchange_profile }}"
+          mvn -s .maven/settings.xml clean deploy -DskipTests -P "${{ steps.set-env.outputs.exchange_profile }}"
+
+      - name: Deploy to CloudHub 2.0
+        run: |
+          echo "Deploying to CloudHub 2.0 with ${{ steps.set-env.outputs.maven_profile }} profile..."
           mvn deploy --settings .maven/settings.xml -DskipMunitTests -DmuleDeploy \
-          -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
-          -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}" \
-          -DenvSufix="${{ secrets.ENV_SUFFIX }}" \
-          -DsecureKey="${{ secrets.SECURE_KEY }}"
-          echo "Deployment to Development completed"
-    
+            -P${{ steps.set-env.outputs.maven_profile }} \
+            -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
+            -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}" \
+            -DenvSufix="${{ steps.set-env.outputs.env_suffix }}" \
+            -DsecureKey="${{ secrets.SECURE_KEY }}"
+          echo "Deployment completed successfully"
