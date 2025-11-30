@@ -8,7 +8,7 @@
     <server>
       <id>Repository</id> <!-- make sure this matches the serverId property in pom.xml -->
       <username>~~~Client~~~</username>
-      <password>${client.id}~?~${client.secret}</password> <!-- these come from the build.yml and your github secrets -->
+      <password>020f98cdd4994cb1a23eaf824422c7db~?~5f127406951c4a21B1Ee972f82991243</password> <!-- these come from the build.yml and your github secrets -->
     </server>
     <server>
       <id>anypoint-exchange-v3</id> <!-- Exchange repository authentication -->
