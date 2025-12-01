@@ -64,18 +64,22 @@ jobs:
           REPO_NAME="${{ github.event.repository.name }}"
 
           # Set environment-specific variables
+          # Note: For free trial POC, all branches deploy to same "Sandbox" environment with different app names
           if [[ "$BRANCH" == "development" ]]; then
             echo "env_suffix=dev" >> $GITHUB_OUTPUT
             echo "maven_profile=Sandbox" >> $GITHUB_OUTPUT
             echo "exchange_profile=$REPO_NAME-v1-dev" >> $GITHUB_OUTPUT
+            echo "ch2_environment=Sandbox" >> $GITHUB_OUTPUT
           elif [[ "$BRANCH" == "uat" ]]; then
             echo "env_suffix=uat" >> $GITHUB_OUTPUT
             echo "maven_profile=Sandbox" >> $GITHUB_OUTPUT
             echo "exchange_profile=$REPO_NAME-v1-uat" >> $GITHUB_OUTPUT
+            echo "ch2_environment=Sandbox" >> $GITHUB_OUTPUT
           elif [[ "$BRANCH" == "main" ]]; then
             echo "env_suffix=prod" >> $GITHUB_OUTPUT
-            echo "maven_profile=prod" >> $GITHUB_OUTPUT
+            echo "maven_profile=Sandbox" >> $GITHUB_OUTPUT
             echo "exchange_profile=$REPO_NAME-v1-prod" >> $GITHUB_OUTPUT
+            echo "ch2_environment=Sandbox" >> $GITHUB_OUTPUT
           fi
 
       - name: Build and Publish to Exchange
@@ -95,7 +99,7 @@ jobs:
             -P${{ steps.set-env.outputs.maven_profile }} \
             -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
             -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}" \
-            -Denvironment="Sandbox" \
+            -Denvironment="${{ steps.set-env.outputs.ch2_environment }}" \
             -DenvSufix="${{ steps.set-env.outputs.env_suffix }}" \
             -DsecureKey="${{ secrets.SECURE_KEY }}"
           echo "Deployment completed successfully"

@@ -27,7 +27,8 @@
 		<profile>
 			<id>Sandbox</id>
 			<properties>
-				<targetName>non-prod</targetName>
+				<!-- For CloudHub 2.0 free trial, target is "Sandbox" (the default shared space) -->
+				<targetName>Sandbox</targetName>
 				<app.name>${project.name}-${envSufix}</app.name>
 				<replicas>1</replicas>
 				<cores>0.1</cores>
@@ -37,8 +38,9 @@
 		<profile>
 			<id>prod</id>
 			<properties>
-				<targetName>pro-private-space</targetName>
-				<replicas>2</replicas>
+				<!-- For production, use a private space or different target if available -->
+				<targetName>Sandbox</targetName>
+				<replicas>1</replicas>
 				<cores>0.1</cores>
 				<publicUrl>true</publicUrl>
 			</properties>
