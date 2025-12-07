@@ -64,7 +64,7 @@
 					<cloudhub2Deployment>
 						<uri>https://anypoint.mulesoft.com</uri>
 						<provider>MC</provider>
-						<environment>{environment}</environment>
+						<environment>${environment}</environment>
 						<target>${targetName}</target>
 						<javaVersion>17</javaVersion>
 						<!--<businessGroupId>${businessGroupId}</businessGroupId>  -->
