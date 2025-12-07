@@ -94,7 +94,19 @@ jobs:
 
       - name: Deploy to CloudHub 2.0
         run: |
-          echo "Deploying to CloudHub 2.0 with ${{ steps.set-env.outputs.maven_profile }} profile..."
+          echo "=========================================="
+          echo "DEPLOYMENT VARIABLE TRACE"
+          echo "=========================================="
+          echo "Branch: ${{ github.event.pull_request.base.ref }}"
+          echo "Maven Profile: ${{ steps.set-env.outputs.maven_profile }}"
+          echo "Environment: ${{ steps.set-env.outputs.ch2_environment }}"
+          echo "Env Suffix: ${{ steps.set-env.outputs.env_suffix }}"
+          echo "Exchange Profile: ${{ steps.set-env.outputs.exchange_profile }}"
+          echo "Client ID set: ${{ secrets.CONNECTED_APP_CLIENT_ID != '' }}"
+          echo "Client Secret set: ${{ secrets.CONNECTED_APP_CLIENT_SECRET != '' }}"
+          echo "Secure Key set: ${{ secrets.SECURE_KEY != '' }}"
+          echo "=========================================="
+          echo "Deploying to CloudHub 2.0..."
           mvn deploy --settings .maven/settings.xml -DskipMunitTests -DmuleDeploy \
             -P${{ steps.set-env.outputs.maven_profile }} \
             -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
