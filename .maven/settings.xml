@@ -4,17 +4,54 @@
     <pluginGroup>org.mule.tools</pluginGroup>
   </pluginGroups>
   <servers>
-    <!-- connected app's required scopes: https://help.salesforce.com/s/articleView?id=001119708&type=1 -->
+    <!-- Connected App authentication for Exchange deployment -->
     <server>
-      <id>Repository</id> <!-- make sure this matches the serverId property in pom.xml -->
+      <id>Repository</id>
       <username>~~~Client~~~</username>
-      <password>020f98cdd4994cb1a23eaf824422c7db~?~5f127406951c4a21B1Ee972f82991243</password> <!-- these come from the build.yml and your github secrets -->
+      <password>${client.id}~?~${client.secret}</password>
     </server>
     <server>
-      <id>anypoint-exchange-v3</id> <!-- Exchange repository authentication -->
+      <id>anypoint-exchange-v3</id>
       <username>~~~Client~~~</username>
-      <password>020f98cdd4994cb1a23eaf824422c7db~?~5f127406951c4a21B1Ee972f82991243</password>
+      <password>${client.id}~?~${client.secret}</password>
+    </server>
+    <!-- Additional server for parent POM resolution from private Exchange -->
+    <server>
+      <id>anypoint-exchange-v3-${project.groupId}</id>
+      <username>~~~Client~~~</username>
+      <password>${client.id}~?~${client.secret}</password>
     </server>
   </servers>
+
+  <!-- Ensure parent POM can be resolved from Exchange -->
+  <profiles>
+    <profile>
+      <id>anypoint-exchange</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <repositories>
+        <repository>
+          <id>anypoint-exchange-v3</id>
+          <name>Anypoint Exchange V3</name>
+          <url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+          <layout>default</layout>
+        </repository>
+        <repository>
+          <id>Repository</id>
+          <name>Private Exchange Repository</name>
+          <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${project.groupId}/maven</url>
+          <layout>default</layout>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>anypoint-exchange-v3</id>
+          <name>Anypoint Exchange V3</name>
+          <url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
 
 </settings>
