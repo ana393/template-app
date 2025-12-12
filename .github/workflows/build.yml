@@ -1,6 +1,8 @@
 name: Publish to Exchange & Deploy to CH2.0
 
 on:
+  push:
+    branches: [ development, uat, main, RELEASE/** ]
   pull_request_target:
     branches: [ development, uat, main ]
     types: [ closed ]
@@ -11,13 +13,13 @@ env:
   JAVA_DISTRIBUTION: zulu
 
 jobs:
-  # Deploy job (runs only when PR is merged)
+  # Deploy job (runs on push or when PR is merged)
   deploy:
-    name: Deploy to ${{ github.event.pull_request.base.ref }}
-    if: github.event.pull_request.merged == true
+    name: Deploy to ${{ github.event_name == 'push' && github.ref_name || github.event.pull_request.base.ref }}
+    if: github.event_name == 'push' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     environment:
-      name: ${{ github.event.pull_request.base.ref == 'main' && 'production' || github.event.pull_request.base.ref }}
+      name: ${{ (github.event_name == 'push' && github.ref_name == 'main') || github.event.pull_request.base.ref == 'main' && 'production' || (github.event_name == 'push' && github.ref_name || github.event.pull_request.base.ref) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -42,7 +44,8 @@ jobs:
 
       - name: Bump version and commit
         run: |
-          echo "Setting version on branch: ${{ github.event.pull_request.base.ref }}"
+          BRANCH="${{ github.event_name == 'push' && github.ref_name || github.event.pull_request.base.ref }}"
+          echo "Setting version on branch: $BRANCH"
           mvn build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
           mvn versions:commit
           NEW_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
@@ -53,7 +56,7 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add pom.xml version
           git commit -m "[skip ci] Update version to $NEW_VERSION" || echo "No changes to commit"
-          git push origin ${{ github.event.pull_request.base.ref }}
+          git push origin $BRANCH
 
       # - name: Run MUnit Tests
       #   env:
@@ -78,7 +81,7 @@ jobs:
       - name: Set environment variables
         id: set-env
         run: |
-          BRANCH="${{ github.event.pull_request.base.ref }}"
+          BRANCH="${{ github.event_name == 'push' && github.ref_name || github.event.pull_request.base.ref }}"
           REPO_NAME="${{ github.event.repository.name }}"
 
           # Set environment-specific variables
