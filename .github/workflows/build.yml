@@ -46,9 +46,18 @@ jobs:
         run: |
           BRANCH="${{ github.event_name == 'push' && github.ref_name || github.event.pull_request.base.ref }}"
           echo "Setting version on branch: $BRANCH"
-          mvn build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
-          mvn versions:commit
-          NEW_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          mvn build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion} \
+            -s .maven/settings.xml \
+            -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
+            -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}"
+          mvn versions:commit \
+            -s .maven/settings.xml \
+            -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
+            -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}"
+          NEW_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout \
+            -s .maven/settings.xml \
+            -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
+            -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}")
           echo "VERSION=$NEW_VERSION" > version
           echo "Version bumped to: $NEW_VERSION"
 
