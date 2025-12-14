@@ -7,7 +7,7 @@
 	<!-- Application-Specific Information (MUST come before parent for version bumping) -->
 	<groupId>0cfbe4fa-1b3e-43c0-b1f8-7563e022eaeb</groupId>
 	<artifactId>template-app</artifactId>
-	<version>1.0.14</version>
+	<version>1.0.15</version>
 	<packaging>mule-application</packaging>
 
 	<name>template-app</name>
