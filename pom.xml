@@ -23,7 +23,6 @@
 	<properties>
 		<!-- Add any app-specific properties here -->
 	</properties>
-
 	<!-- Application-Specific Profile Overrides (if needed) -->
 	<profiles>
 		<profile>
