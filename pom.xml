@@ -16,7 +16,7 @@
 	<parent>
 		<groupId>0cfbe4fa-1b3e-43c0-b1f8-7563e022eaeb</groupId>
 		<artifactId>parent-pom</artifactId>
-		<version>1.0.2</version>
+		<version>1.0.3</version>
 	</parent>
 
 	<!-- Application-Specific Properties (if needed) -->
