@@ -4,20 +4,20 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<!-- Parent POM Reference -->
-	<parent>
-		<groupId>0cfbe4fa-1b3e-43c0-b1f8-7563e022eaeb</groupId>
-		<artifactId>parent-pom</artifactId>
-		<version>1.0.2</version>
-	</parent>
-
-	<!-- Application-Specific Information -->
+	<!-- Application-Specific Information (MUST come before parent for version bumping) -->
 	<groupId>0cfbe4fa-1b3e-43c0-b1f8-7563e022eaeb</groupId>
 	<artifactId>template-app</artifactId>
 	<version>1.0.12</version>
 	<packaging>mule-application</packaging>
 
 	<name>template-app</name>
+
+	<!-- Parent POM Reference -->
+	<parent>
+		<groupId>0cfbe4fa-1b3e-43c0-b1f8-7563e022eaeb</groupId>
+		<artifactId>parent-pom</artifactId>
+		<version>1.0.2</version>
+	</parent>
 
 	<!-- Application-Specific Properties (if needed) -->
 	<properties>
