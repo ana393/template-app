@@ -164,21 +164,20 @@ jobs:
           echo "Environment: $ENVIRONMENT"
           echo "=========================================="
 
-          # Create release notes with environment metadata
-          RELEASE_NOTES=$(cat <<EOF
+          # Create release notes file
+          cat > release-notes.md << NOTES
 **Environment:** $ENVIRONMENT
 **Branch:** $BRANCH
 **Deployed:** $DEPLOY_TIME
 **Maven Profile:** $MAVEN_PROFILE
 
 ## Changes in This Release
-EOF
-)
+NOTES
 
           # Create GitHub Release with auto-generated notes
           gh release create "$TAG_NAME" \
             --title "Production Release $VERSION" \
-            --notes "$RELEASE_NOTES" \
+            --notes-file release-notes.md \
             --generate-notes \
             --latest
 
