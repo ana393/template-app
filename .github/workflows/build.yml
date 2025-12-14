@@ -143,35 +143,43 @@ jobs:
             -DsecureKey="${{ secrets.SECURE_KEY }}"
           echo "Deployment completed successfully"
 
-      - name: Create and Push Git Tag
+      - name: Create GitHub Release (Production Only)
+        if: github.event.pull_request.base.ref == 'main'
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          ENVIRONMENT: ${{ steps.set-env.outputs.ch2_environment }}
+          BRANCH: ${{ github.event.pull_request.base.ref }}
+          MAVEN_PROFILE: ${{ steps.set-env.outputs.maven_profile }}
         run: |
-          BRANCH="${{ github.event.pull_request.base.ref }}"
           VERSION=$(cat version)
-
-          # Determine tag name based on environment
-          if [[ "$BRANCH" == "main" ]]; then
-            TAG_NAME="v${VERSION}"
-          else
-            ENV_SUFFIX="${{ steps.set-env.outputs.env_suffix }}"
-            TAG_NAME="v${VERSION}-${ENV_SUFFIX}"
-          fi
+          TAG_NAME="v${VERSION}"
+          DEPLOY_TIME=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
 
           echo "=========================================="
-          echo "GIT TAG CREATION"
+          echo "GITHUB RELEASE CREATION - PRODUCTION"
           echo "=========================================="
           echo "Branch: $BRANCH"
           echo "Version: $VERSION"
           echo "Tag Name: $TAG_NAME"
+          echo "Environment: $ENVIRONMENT"
           echo "=========================================="
 
-          # Configure git
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # Create release notes with environment metadata
+          RELEASE_NOTES=$(cat <<EOF
+**Environment:** $ENVIRONMENT
+**Branch:** $BRANCH
+**Deployed:** $DEPLOY_TIME
+**Maven Profile:** $MAVEN_PROFILE
 
-          # Create annotated tag with deployment info
-          git tag -a "$TAG_NAME" -m "Release $TAG_NAME - Deployed to ${{ steps.set-env.outputs.ch2_environment }}" || echo "Tag already exists, skipping"
+## Changes in This Release
+EOF
+)
 
-          # Push tag to remote
-          git push origin "$TAG_NAME" || echo "Tag push failed or tag already exists remotely"
+          # Create GitHub Release with auto-generated notes
+          gh release create "$TAG_NAME" \
+            --title "Production Release $VERSION" \
+            --notes "$RELEASE_NOTES" \
+            --generate-notes \
+            --latest
 
-          echo "Tag $TAG_NAME created and pushed successfully"
+          echo "GitHub Release $TAG_NAME created successfully"

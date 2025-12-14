@@ -28,7 +28,20 @@ To make it easy for you to get started with a new project, here's a list of reco
 ------
 
 ## Test and Deploy
-| Environment   | Status        | 
-| :-------------: |:-------------:| 
-| Development   |![Build Status](https://gitlab.com/Mulesoft/template-app)| 
-| Production   |![Build Status](https://gitlab.com/Mulesoft/template-app)| 
+| Environment   | Status        |
+| :-------------: |:-------------:|
+| Development   |![Build Status](https://gitlab.com/Mulesoft/template-app)|
+| Production   |![Build Status](https://gitlab.com/Mulesoft/template-app)|
+
+------
+
+## Git Tag Conventions
+
+This project uses automated Git tagging for releases. For detailed information:
+- Automation details: See [TAG-AUTOMATION-GUIDE.md](TAG-AUTOMATION-GUIDE.md)
+- Best practices: See [GIT-TAG-BEST-PRACTICES.md](GIT-TAG-BEST-PRACTICES.md)
+
+**Tag Format**:
+- Development: `v1.0.84-dev`
+- UAT: `v1.0.84-uat`
+- Production: `v1.0.84`
