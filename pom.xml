@@ -18,7 +18,6 @@
 		<artifactId>parent-pom</artifactId>
 		<version>1.0.2</version>
 	</parent>
-
 	<!-- Application-Specific Properties (if needed) -->
 	<properties>
 		<!-- Add any app-specific properties here -->
