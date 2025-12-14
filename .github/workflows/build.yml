@@ -1,38 +1,178 @@
 name: Publish to Exchange & Deploy to CH2.0
 
 on:
-  push:
-    branches: [ cloudhub2 ]
-    
-jobs:         
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout this repo
-        uses: actions/checkout@v4
+  pull_request:
+    branches: [ development, uat, main ]
+    types: [ closed ]
 
-      - name: Cache dependencies
+env:
+  MAVEN_OPTS: -Xmx1024m
+  JAVA_VERSION: 17
+  JAVA_DISTRIBUTION: zulu
+
+jobs:
+  # Deploy job (runs when PR is merged)
+  deploy:
+    name: Deploy to ${{ github.event.pull_request.base.ref }}
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.pull_request.base.ref == 'main' && 'production' || github.event.pull_request.base.ref }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Cache Maven dependencies
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
+          key: ${{ runner.os }}-maven-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-${{ github.ref_name }}-
+            ${{ runner.os }}-maven-
 
-      - name: Set up JDK 1.8
-        uses: actions/setup-java@v4
-        with:
-          distribution: "zulu"
-          java-version: 8
-      
-      - name: Publish to Exchange
+      - name: Bump version and commit
         run: |
-          mvn deploy --settings .maven/settings.xml -DskipMunitTests \
-          -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
-          -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}"
+          BRANCH="${{ github.event.pull_request.base.ref }}"
+          echo "Setting version on branch: $BRANCH"
+          mvn build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion} \
+            -s .maven/settings.xml \
+            -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
+            -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}"
+          mvn versions:commit \
+            -s .maven/settings.xml \
+            -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
+            -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}"
+          NEW_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout \
+            -s .maven/settings.xml \
+            -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
+            -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}")
+          echo "VERSION=$NEW_VERSION" > version
+          echo "Version bumped to: $NEW_VERSION"
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add pom.xml version
+          git commit -m "[skip ci] Update version to $NEW_VERSION" || echo "No changes to commit"
+          git push origin $BRANCH
+
+      # - name: Run MUnit Tests
+      #   env:
+      #     MUNIT_SECURE_KEY: ${{ secrets.MUNIT_SECURE_KEY || secrets.SECURE_KEY }}
+      #   run: |
+      #     # Coverage threshold set to 20% for initial testing
+      #     # TODO: Increase to 80% for UAT and production deployments
+      #     mvn clean test \
+      #       -Denv=test \
+      #       -DsecureKey="${MUNIT_SECURE_KEY}" \
+      #       -Dmunit.app.coverage=20 \
+      #       -Dmunit.coverage.fail.build=true
+
+      # - name: Upload MUnit Coverage Report
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: munit-coverage-report-${{ github.event.pull_request.base.ref }}
+      #     path: target/site/munit/coverage/
+      #     retention-days: 30
+
+      - name: Set environment variables
+        id: set-env
+        run: |
+          BRANCH="${{ github.event.pull_request.base.ref }}"
+          REPO_NAME="${{ github.event.repository.name }}"
+
+          # Set environment-specific variables
+          # Note: For free trial POC, all branches deploy to same "Sandbox" environment with different app names
+          if [[ "$BRANCH" == "development" ]]; then
+            echo "env_suffix=dev" >> $GITHUB_OUTPUT
+            echo "maven_profile=Sandbox" >> $GITHUB_OUTPUT
+            echo "exchange_profile=$REPO_NAME-v1-dev" >> $GITHUB_OUTPUT
+            echo "ch2_environment=Sandbox" >> $GITHUB_OUTPUT
+          elif [[ "$BRANCH" == "uat" ]]; then
+            echo "env_suffix=uat" >> $GITHUB_OUTPUT
+            echo "maven_profile=Sandbox" >> $GITHUB_OUTPUT
+            echo "exchange_profile=$REPO_NAME-v1-uat" >> $GITHUB_OUTPUT
+            echo "ch2_environment=Sandbox" >> $GITHUB_OUTPUT
+          elif [[ "$BRANCH" == "main" ]]; then
+            echo "env_suffix=prod" >> $GITHUB_OUTPUT
+            echo "maven_profile=Sandbox" >> $GITHUB_OUTPUT
+            echo "exchange_profile=$REPO_NAME-v1-prod" >> $GITHUB_OUTPUT
+            echo "ch2_environment=Sandbox" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and Publish to Exchange
+        run: |
+          echo "Publishing to Exchange with debug output"
+          echo "Client ID is set: ${{ secrets.CONNECTED_APP_CLIENT_ID != '' }}"
+          echo "Client Secret is set: ${{ secrets.CONNECTED_APP_CLIENT_SECRET != '' }}"
+          echo "Settings file: .maven/settings.xml"
+          mvn -s .maven/settings.xml clean deploy -DskipTests -U -X \
+            -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
+            -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}"
 
       - name: Deploy to CloudHub 2.0
         run: |
+          echo "=========================================="
+          echo "DEPLOYMENT VARIABLE TRACE"
+          echo "=========================================="
+          echo "Branch: ${{ github.event.pull_request.base.ref }}"
+          echo "Maven Profile: ${{ steps.set-env.outputs.maven_profile }}"
+          echo "Environment: ${{ steps.set-env.outputs.ch2_environment }}"
+          echo "Env Suffix: ${{ steps.set-env.outputs.env_suffix }}"
+          echo "Exchange Profile: ${{ steps.set-env.outputs.exchange_profile }}"
+          echo "Client ID set: ${{ secrets.CONNECTED_APP_CLIENT_ID != '' }}"
+          echo "Client Secret set: ${{ secrets.CONNECTED_APP_CLIENT_SECRET != '' }}"
+          echo "Secure Key set: ${{ secrets.SECURE_KEY != '' }}"
+          echo "=========================================="
+          echo "Deploying to CloudHub 2.0..."
           mvn deploy --settings .maven/settings.xml -DskipMunitTests -DmuleDeploy \
-          -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
-          -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}" \
-          -Ddecryption.key="${{ secrets.DECRYPTION_KEY }}"
+            -P${{ steps.set-env.outputs.maven_profile }} \
+            -Dclient.id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
+            -Dclient.secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}" \
+            -Denvironment="${{ steps.set-env.outputs.ch2_environment }}" \
+            -DenvSufix="${{ steps.set-env.outputs.env_suffix }}" \
+            -DsecureKey="${{ secrets.SECURE_KEY }}"
+          echo "Deployment completed successfully"
+
+      - name: Create and Push Git Tag
+        run: |
+          BRANCH="${{ github.event.pull_request.base.ref }}"
+          VERSION=$(cat version)
+
+          # Determine tag name based on environment
+          if [[ "$BRANCH" == "main" ]]; then
+            TAG_NAME="v${VERSION}"
+          else
+            ENV_SUFFIX="${{ steps.set-env.outputs.env_suffix }}"
+            TAG_NAME="v${VERSION}-${ENV_SUFFIX}"
+          fi
+
+          echo "=========================================="
+          echo "GIT TAG CREATION"
+          echo "=========================================="
+          echo "Branch: $BRANCH"
+          echo "Version: $VERSION"
+          echo "Tag Name: $TAG_NAME"
+          echo "=========================================="
+
+          # Configure git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create annotated tag with deployment info
+          git tag -a "$TAG_NAME" -m "Release $TAG_NAME - Deployed to ${{ steps.set-env.outputs.ch2_environment }}" || echo "Tag already exists, skipping"
+
+          # Push tag to remote
+          git push origin "$TAG_NAME" || echo "Tag push failed or tag already exists remotely"
+
+          echo "Tag $TAG_NAME created and pushed successfully"

@@ -11,10 +11,10 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="815150c3-86f7-4f38-94ac-2935d1166912" >
 		<http:listener-connection host="${http.host}" port="${http.private.port}" readTimeout="${http.timeouts.connection}"/>
 	</http:listener-config>
-	<configuration-properties doc:name="Configuration properties" doc:id="1ee0a9bb-368e-4a46-8fa2-4a001b012080" file="properties\config-${env}.yaml" />
-	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="8fe5dd8c-2530-425c-b114-61fbcc7ba423" file="properties\config-${env}.yaml" key="${secureKey}" />
+	<configuration-properties doc:name="Configuration properties" doc:id="1ee0a9bb-368e-4a46-8fa2-4a001b012080" file="config\config-${env}.yaml" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="8fe5dd8c-2530-425c-b114-61fbcc7ba423" file="config\config-${env}.yaml" key="${secureKey}" />
 	<configuration doc:name="Configuration" doc:id="14913a81-0cb1-4af9-b9a4-8542f6f9767a" defaultErrorHandler-ref="Global_Error_Handler" />
-	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="f54f6f3f-79be-4f08-affe-4f81b8f6ef95" flowRef="api-main" />
+	<!--  <api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="f54f6f3f-79be-4f08-affe-4f81b8f6ef95" flowRef="api-main" /> -->
 	<tls:context name="TLS_Context" doc:name="TLS Context" doc:id="78cb3fe6-644e-4a0f-a970-b5a8cd8bc830" >
 		<tls:key-store type="jks" path="keystores/${secure::serverSsl.fileName}" keyPassword="${secure::serverSsl.privateKeyPassword}" password="${secure::serverSsl.keystorePassword}"/>
 	</tls:context>

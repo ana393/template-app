@@ -32,13 +32,11 @@ now()]]></ee:set-variable>
         <apikit:router config-ref="api-config" />
         <error-handler ref="Global_Error_Handler" />
     </flow>
-    <flow name="get:\:api-config">
+    <flow name="get:\status:api-config">
         <logger level="INFO" doc:name="start" doc:id="8f7a71da-df55-4ce1-9130-d7852f7e7ec1" message="#[vars.logPrefix] : Call Started at timestamp :  #[vars.start]" />
         <ee:transform doc:name="Transform Message">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
-//import * from java!org.mycompany.utils.MyHelper
-import java!org::mycompany::utils::MyHelper
 output application/json encoding="UTF-8"
 ---
 {
@@ -46,8 +44,7 @@ output application/json encoding="UTF-8"
 	environment: p('env'),
 	status: "Running",
 	ip: server.ip,
-	host: server.host,
-	consumer: MyHelper::greet("Jhon Doe")
+	host: server.host
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>

@@ -1,221 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
+	<!-- Application-Specific Information (MUST come before parent for version bumping) -->
 	<groupId>0cfbe4fa-1b3e-43c0-b1f8-7563e022eaeb</groupId>
 	<artifactId>template-app</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.14</version>
 	<packaging>mule-application</packaging>
 
 	<name>template-app</name>
 
+	<!-- Parent POM Reference -->
+	<parent>
+		<groupId>0cfbe4fa-1b3e-43c0-b1f8-7563e022eaeb</groupId>
+		<artifactId>parent-pom</artifactId>
+		<version>1.0.2</version>
+	</parent>
+
+	<!-- Application-Specific Properties (if needed) -->
 	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
-		<app.runtime>4.9.0</app.runtime>
-		<mule.maven.plugin.version>4.5.3</mule.maven.plugin.version>
-		<apikit.module.version>1.11.4</apikit.module.version>
-		<http.connector.version>1.10.3</http.connector.version>
-		<sockets.connector.version>1.2.5</sockets.connector.version>
-		<secure.properties.module.version>1.2.7</secure.properties.module.version>
+		<!-- Add any app-specific properties here -->
 	</properties>
-
-	<!-- CI/CD profiles for deployment automation -->
+	<!-- Application-Specific Profile Overrides (if needed) -->
 	<profiles>
 		<profile>
-			<id>template-app-Sandbox</id>
+			<id>Sandbox</id>
 			<properties>
-				<targetName>non-prod</targetName>
+				<!-- Override parent profile properties if needed -->
 				<app.name>${project.name}-${envSufix}</app.name>
-				<replicas>1</replicas>
-				<cores>0.1</cores>
-				<publicUrl>true</publicUrl>
-			</properties>
-		</profile>
-		<profile>
-			<id>template-app-prod</id>
-			<properties>
-				<targetName>pro-private-space</targetName>
-				<replicas>2</replicas>
-				<cores>0.1</cores>
-				<publicUrl>true</publicUrl>
 			</properties>
 		</profile>
 	</profiles>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-clean-plugin</artifactId>
-				<version>3.2.0</version>
-			</plugin>
-			<plugin>
-				<groupId>org.mule.tools.maven</groupId>
-				<artifactId>mule-maven-plugin</artifactId>
-				<version>${mule.maven.plugin.version}</version>
-				<extensions>true</extensions>
-				<configuration>
-					<classifier>mule-application</classifier>
-					<cloudhub2Deployment>
-						<uri>https://anypoint.mulesoft.com</uri>
-						<provider>MC</provider>
-						<environment>Sandbox</environment>
-						<target>Cloudhub-US-East-2</target>
-						<javaVersion>17</javaVersion>
-					<!--<businessGroupId>${businessGroupId}</businessGroupId>  -->
-						<server>Repository</server>
-				 <!--   <connectedAppClientId>${connectedAppClientId}</connectedAppClientId>
-						<connectedAppClientSecret>${connectedAppClientSecret}</connectedAppClientSecret>
-						<connectedAppGrantType>${connectedAppGrantType}</connectedAppGrantType> -->
-						<applicationName>${project.artifactId}</applicationName>
-					<!--<releaseChannel>Edge</releaseChannel> -->
-						<replicas>1</replicas>
-						<vCores>0.1</vCores>
-						<deploymentTimeout>2000000</deploymentTimeout>
-					<!--<integrations>
-							<services>
-								<objectStoreV2>
-									<enabled>true</enabled>
-								</objectStoreV2>
-							</services>
-						</integrations>
-						<deploymentSettings>
-							  <http>
-								<inbound>
-									<lastMileSecurity>true</lastMileSecurity>
-								</inbound>
-							</http>
-							<generateDefaultPublicUrl>${publicUrl}</generateDefaultPublicUrl>
-						</deploymentSettings>  -->
-						<properties>
-							<envSufix>${envSufix}</envSufix>
-						<!--<anypoint.platform.client_id>${anypointClientId}</anypoint.platform.client_id>
-							<anypoint.platform.analytics_base_uri>${anypointAnalyticsBaseUri}</anypoint.platform.analytics_base_uri>
-							<anypoint.platform.base_uri>${anypointBaseUri}</anypoint.platform.base_uri>
-							<auditMessage>${auditMessage}</auditMessage> -->
-						</properties>
-						<secureProperties>
-							<secure_key>${secureKey}</secure_key>
-						<!--<anypoint.platform.client_secret>${anypointClientSecret}</anypoint.platform.client_secret>   -->
-						</secureProperties>
-					</cloudhub2Deployment>
-			<!--<sharedLibraries>
-					<sharedLibrary>
-						<groupId>com.sap.conn.jco</groupId>
-						<artifactId>com.sap.conn.jco.sapjco3</artifactId>
-					</sharedLibrary>
-					<sharedLibrary>
-						<groupId>com.sap.conn.idoc</groupId>
-						<artifactId>com.sap.conn.idoc.sapidoc3</artifactId>
-					</sharedLibrary>
-					<sharedLibrary>
-						<groupId>com.sap.conn.jco</groupId>
-						<artifactId>libsapjco3</artifactId>
-					</sharedLibrary> 
-				</sharedLibraries>  -->
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-
+	<!-- Application-Specific Dependencies -->
 	<dependencies>
+		<!-- Mule Connectors (versions managed by parent) -->
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-http-connector</artifactId>
-			<version>${http.connector.version}</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-sockets-connector</artifactId>
-			<version>${sockets.connector.version}</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
+
+		<!-- Mule Modules (versions managed by parent) -->
 		<dependency>
 			<groupId>org.mule.modules</groupId>
 			<artifactId>mule-apikit-module</artifactId>
-			<version>${apikit.module.version}</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
 			<groupId>com.mulesoft.modules</groupId>
 			<artifactId>mule-secure-configuration-property-module</artifactId>
-			<version>${secure.properties.module.version}</version>
 			<classifier>mule-plugin</classifier>
-		</dependency>
-		<!-- SAP Dependencies  -->
-		<!-- App-specific dependencies: chg so to dll before cloud deployment -->
-		<!-- 	<dependency>
-			<groupId>com.mulesoft.connectors</groupId>
-			<artifactId>mule-sap-connector</artifactId>
-			<version>5.5.0</version>
-			<classifier>mule-plugin</classifier>
-		</dependency>
-		<dependency>
-			<groupId>com.sap.conn.jco</groupId>
-			<artifactId>com.sap.conn.jco.sapjco3</artifactId>
-			<version>3.0.18</version>
-		</dependency>
-		<dependency>
-			<groupId>com.sap.conn.idoc</groupId>
-			<artifactId>com.sap.conn.idoc.sapidoc3</artifactId>
-			<version>3.0.18</version>
 		</dependency>
 
+		<!-- MUnit Testing (versions managed by parent) -->
 		<dependency>
-			<groupId>com.sap.conn.jco</groupId>
-			<artifactId>libsapjco3</artifactId>
-			<version>3.0.18</version>
-			<type>so</type> 
-		</dependency> -->
+			<groupId>com.mulesoft.munit</groupId>
+			<artifactId>munit-runner</artifactId>
+			<classifier>mule-plugin</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.munit</groupId>
+			<artifactId>munit-tools</artifactId>
+			<classifier>mule-plugin</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.weave</groupId>
+			<artifactId>assertions</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
-
-	<repositories>
-		<repository>
-			<id>anypoint-exchange-v3</id>
-			<name>Anypoint Exchange</name>
-			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
-			<layout>default</layout>
-		</repository>
-		<repository>
-			<id>mulesoft-releases</id>
-			<name>MuleSoft Releases Repository</name>
-			<url>https://repository.mulesoft.org/releases/</url>
-			<layout>default</layout>
-		</repository>
-		<repository>
-			<id>Repository</id>
-			<name>Private Exchange repository</name>
-			<url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${project.groupId}/maven</url>
-			<layout>default</layout>
-		</repository>
-	<!-- <repository>
-			<id>central</id>
-			<url>https://repo.maven.apache.org/maven2</url>
-			<layout>default</layout>
-		</repository>  -->
-	</repositories>
-
-	<pluginRepositories>
-		<pluginRepository>
-			<id>mulesoft-releases</id>
-			<name>MuleSoft Releases Repository</name>
-			<layout>default</layout>
-			<url>https://repository.mulesoft.org/releases/</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</pluginRepository>
-	</pluginRepositories>
-	<distributionManagement>
-		<repository>
-			<id>Repository</id>
-			<name>Corporate repository</name>
-			<url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${project.groupId}/maven</url>
-			<layout>default</layout>
-		</repository>
-	</distributionManagement>
 
 </project>

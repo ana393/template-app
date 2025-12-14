@@ -15,6 +15,6 @@ traits:
   paginated: !include  common-module/pagination.raml
 
 
-/:
+/status:
   is: [ClientIdEnforcement,StandardErrors.err_400,StandardErrors.err_401,StandardErrors.err_403,StandardErrors.err_404,StandardErrors.err_405,StandardErrors.err_415,StandardErrors.err_500]
   type: Health.check

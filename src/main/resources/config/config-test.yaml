@@ -1,0 +1,37 @@
+api:
+  id: "test-api-id"
+env: "test"
+http:
+  host: "localhost"
+  basePath: "/v1/*"
+  private:
+    port: "8081"
+  timeouts:
+    connection: "30000"
+    response: "30000"
+
+reconnection:
+  frequency: "500"
+  attempts: "3"
+
+serverSsl:
+  keystorePassword: "![]"
+  privateKeyPassword: "![]"
+  fileName: "" #.pfx
+
+# Test/Mock SAP configuration (not used in actual tests)
+sap:
+  connection:
+    systemNumber: ""
+    clientID: ""
+    messageServerHost: ""
+    systemId: ""
+    messageServerPort: ""
+    messageServerGroup: "All"
+    gatewayHost: ""
+    gateServicePort: ""
+    programId: ""
+
+sendIdoc:
+  maxRetries: "2"
+  milliSecsBetweenRetries: "4000"

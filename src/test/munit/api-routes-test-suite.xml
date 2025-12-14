@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="api-routes-test-suite.xml" />
+	<munit:test name="api-routes-test-suite-api-mainTest" doc:id="5274a34b-011b-4617-acad-5be91ce5dae5" description="Test">
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to api-main" doc:id="bdb53285-6de7-48f6-9ede-e4a2ac2feb23" name="api-main"/>
+		</munit:execution>
+	</munit:test>
+	<munit:test name="api-routes-test-suite-get:\status:api-configTest" doc:id="d8606646-9042-41d7-bfc3-6cf75cbcde98" description="Test">
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to get:\status:api-config" doc:id="6103b9e6-ecfb-43b8-b342-59a6e80bbbb2" name="get:\status:api-config"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert expression" doc:id="082fd74e-22c4-44d7-83ec-e509505a6865" />
+		</munit:validation>
+	</munit:test>
+
+
+</mule>
