@@ -1,9 +1,7 @@
 name: Publish to Exchange & Deploy to CH2.0
 
 on:
-  push:
-    branches: [ development, uat, main, RELEASE/** ]
-  pull_request_target:
+  pull_request:
     branches: [ development, uat, main ]
     types: [ closed ]
 
@@ -13,13 +11,13 @@ env:
   JAVA_DISTRIBUTION: zulu
 
 jobs:
-  # Deploy job (runs on push or when PR is merged)
+  # Deploy job (runs when PR is merged)
   deploy:
-    name: Deploy to ${{ github.event_name == 'push' && github.ref_name || github.event.pull_request.base.ref }}
-    if: github.event_name == 'push' || github.event.pull_request.merged == true
+    name: Deploy to ${{ github.event.pull_request.base.ref }}
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     environment:
-      name: ${{ (github.event_name == 'push' && github.ref_name == 'main') || github.event.pull_request.base.ref == 'main' && 'production' || (github.event_name == 'push' && github.ref_name || github.event.pull_request.base.ref) }}
+      name: ${{ github.event.pull_request.base.ref == 'main' && 'production' || github.event.pull_request.base.ref }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,7 +42,7 @@ jobs:
 
       - name: Bump version and commit
         run: |
-          BRANCH="${{ github.event_name == 'push' && github.ref_name || github.event.pull_request.base.ref }}"
+          BRANCH="${{ github.event.pull_request.base.ref }}"
           echo "Setting version on branch: $BRANCH"
           mvn build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion} \
             -s .maven/settings.xml \
@@ -90,7 +88,7 @@ jobs:
       - name: Set environment variables
         id: set-env
         run: |
-          BRANCH="${{ github.event_name == 'push' && github.ref_name || github.event.pull_request.base.ref }}"
+          BRANCH="${{ github.event.pull_request.base.ref }}"
           REPO_NAME="${{ github.event.repository.name }}"
 
           # Set environment-specific variables
@@ -145,3 +143,36 @@ jobs:
             -DenvSufix="${{ steps.set-env.outputs.env_suffix }}" \
             -DsecureKey="${{ secrets.SECURE_KEY }}"
           echo "Deployment completed successfully"
+
+      - name: Create and Push Git Tag
+        run: |
+          BRANCH="${{ github.event.pull_request.base.ref }}"
+          VERSION=$(cat version)
+
+          # Determine tag name based on environment
+          if [[ "$BRANCH" == "main" ]]; then
+            TAG_NAME="v${VERSION}"
+          else
+            ENV_SUFFIX="${{ steps.set-env.outputs.env_suffix }}"
+            TAG_NAME="v${VERSION}-${ENV_SUFFIX}"
+          fi
+
+          echo "=========================================="
+          echo "GIT TAG CREATION"
+          echo "=========================================="
+          echo "Branch: $BRANCH"
+          echo "Version: $VERSION"
+          echo "Tag Name: $TAG_NAME"
+          echo "=========================================="
+
+          # Configure git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create annotated tag with deployment info
+          git tag -a "$TAG_NAME" -m "Release $TAG_NAME - Deployed to ${{ steps.set-env.outputs.ch2_environment }}" || echo "Tag already exists, skipping"
+
+          # Push tag to remote
+          git push origin "$TAG_NAME" || echo "Tag push failed or tag already exists remotely"
+
+          echo "Tag $TAG_NAME created and pushed successfully"
